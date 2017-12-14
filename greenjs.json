@@ -1,7 +1,6 @@
 {
     "title": "JSON schema for greenjs api define files",
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object",
     "definitions": {
         "param": {
             "properties": {
@@ -120,7 +119,7 @@
                         }
                     },
                     "default": {
-                        "no":200
+                        "no": 200
                     }
                 },
                 {
@@ -148,7 +147,7 @@
                         }
                     },
                     "default": {
-                        "status":200
+                        "status": 200
                     }
                 }
             ]
@@ -169,79 +168,84 @@
             ]
         }
     },
-    "properties": {
-        "name": {
-            "description": "接口名",
-            "type": "string"
-        },
-        "rem": {
-            "description": "接口描述",
-            "type": "string"
-        },
-        "url": {
-            "description": "接口url\n大小写敏感",
-            "type": "string"
-        },
-        "method": {
-            "description": "接口调用方式(必须定义)，大小写不敏感",
-            "type": "string",
-            "default": "post"
-        },
-        "params": {
-            "description": "入口参数定义",
-            "type": "object",
-            "additionalProperties": {
-                "type": "object",
-                "$ref": "#/definitions/param"
-            }
-        },
-        "pretreat": {
-            "description": "预处理js伪码定义\n在合法检查和类型转换之后执行",
-            "$ref": "#/definitions/grant"
-        },
-        "grant": {
-            "description": "定义权限检查规则\n{}:入口参数,{U}:登录用户,{S}:当前会话",
-            "$ref": "#/definitions/grant"
-        },
-        "check": {
-            "description": "参数检查规则",
-            "oneOf": [{
-                    "$ref": "#/definitions/check"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/check"
-                    }
-                }
-            ]
-        },
-        "error": {
-            "description": "定义接口可能的错误返回",
-            "type": "object",
-            "additionalProperties": {
+    "oneOf": [{
+        "type": "object",
+        "properties": {
+            "name": {
+                "description": "接口名",
                 "type": "string"
-            }
-        },
-        "ret": {
-            "description": "通过给出返回demo的方式给出返回内容格式定义",
-            "type": "object",
-            "oneOf": [{
-                    "$ref": "#/definitions/ret",
-                    "default": {}
-                },
-                {
-                    "additionalProperties": {
-                        "type": "object",
-                        "$ref": "#/definitions/ret"
+            },
+            "rem": {
+                "description": "接口描述",
+                "type": "string"
+            },
+            "url": {
+                "description": "接口url\n大小写敏感",
+                "type": "string"
+            },
+            "method": {
+                "description": "接口调用方式(必须定义)，大小写不敏感",
+                "type": "string",
+                "default": "post"
+            },
+            "params": {
+                "description": "入口参数定义",
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "$ref": "#/definitions/param"
+                }
+            },
+            "pretreat": {
+                "description": "预处理js伪码定义\n在合法检查和类型转换之后执行",
+                "$ref": "#/definitions/grant"
+            },
+            "grant": {
+                "description": "定义权限检查规则\n{}:入口参数,{U}:登录用户,{S}:当前会话",
+                "$ref": "#/definitions/grant"
+            },
+            "check": {
+                "description": "参数检查规则",
+                "oneOf": [{
+                        "$ref": "#/definitions/check"
                     },
-                    "default": {
-                        "成功": {
-                            "no": 200
+                    {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/check"
                         }
                     }
+                ]
+            },
+            "error": {
+                "description": "定义接口可能的错误返回",
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
                 }
-            ]
+            },
+            "ret": {
+                "description": "通过给出返回demo的方式给出返回内容格式定义",
+                "type": "object",
+                "oneOf": [{
+                        "$ref": "#/definitions/ret",
+                        "default": {}
+                    },
+                    {
+                        "additionalProperties": {
+                            "type": "object",
+                            "$ref": "#/definitions/ret"
+                        },
+                        "default": {
+                            "成功": {
+                                "no": 200
+                            }
+                        }
+                    }
+                ]
+            }
         }
-    }
+    }, {
+        "type": "array"
+    }]
 }

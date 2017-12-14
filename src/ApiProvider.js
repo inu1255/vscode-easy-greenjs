@@ -30,7 +30,7 @@ function getFiles(dir, p) {
 
 function getAliasDir(document, alias) {
     let path = vscode.workspace.getWorkspaceFolder(document.uri).uri.path
-    let map = { }
+    let map = {}
     try {
         map = JSON.parse(fs.readFileSync(path + "/" + "config.json")).alias
     } catch (error) {
@@ -40,18 +40,23 @@ function getAliasDir(document, alias) {
 }
 
 function getApiDir(document) {
-    // let doc = vscode.window.activeTextEditor.document
-    let lineone = document.getText(document.lineAt(1).range)
+    let doc = vscode.window.activeTextEditor.document
+    let lineone = document.getText(document.lineAt(0).range)
     let ss = lineone.split("test:")
-    if (ss.length !== 2) {
-        return
+    if (ss.length === 2) {
+        ss = ss[1].trim()
+        if (fs.existsSync(ss))
+            return ss
+        ss = getAliasDir(document, ss)
+        if (fs.existsSync(ss))
+            return ss
     }
-    ss = ss[1].trim()
-    if (fs.existsSync(ss))
-        return ss
-    ss = getAliasDir(document, ss)
-    if (fs.existsSync(ss))
-        return ss
+    ss = document.fileName.split("/")
+    if (ss[ss.length-3]==="test") {
+        ss = getAliasDir(document, ss[ss.length-2])
+        if (fs.existsSync(ss))
+            return ss
+    }
 }
 
 class ApiProvider {
@@ -194,16 +199,16 @@ class ApiProvider {
     resolveCompletionItem(item, token) {
         if (!item.filename) return item
         let content = fs.readFileSync(item.filename)
-        let d = JSON.parse(content)
+        let d = new Function("return " + content)()
         let ss = [],
             s
         let postFunc = this.config.postFunc
         let getFunc = this.config.getFunc
         if (Object.keys(d.params || {}).length) {
             if (d.method == "GET") {
-                ss.push(`${postFunc}("/${item.label}",{ // ${d.name}`)
-            } else {
                 ss.push(`${getFunc}("/${item.label}",{ // ${d.name}`)
+            } else {
+                ss.push(`${postFunc}("/${item.label}",{ // ${d.name}`)
             }
             var i = 1;
             for (let k in d.params) {
@@ -230,9 +235,9 @@ class ApiProvider {
             s = ss.join("\n")
         } else {
             if (d.method == "GET") {
-                s = `${postFunc}("/${item.label}") // ${d.name}`
-            } else {
                 s = `${getFunc}("/${item.label}") // ${d.name}`
+            } else {
+                s = `${postFunc}("/${item.label}") // ${d.name}`
             }
         }
         item.detail = `[${d.method}] - ${d.name}`
