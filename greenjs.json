@@ -1,0 +1,247 @@
+{
+    "title": "JSON schema for greenjs api define files",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "definitions": {
+        "param": {
+            "properties": {
+                "lbl": {
+                    "description": "用于错误提示或log信息\n如未定义，则使用rem，如rem未定义，则直接使用入口参数名",
+                    "type": "string"
+                },
+                "rem": {
+                    "description": "备注",
+                    "type": "string"
+                },
+                "def": {
+                    "description": "默认值: 如定义了此项，但调用者未提交该入口参数，框架会自动填入默认值\n在所有合法检查之前执行\n定义了默认值，则不会触发need:true错误\n不定义表示无默认值"
+                },
+                "need": {
+                    "description": "是否进行存在合法检查（即是否提交了该入口参数）",
+                    "type": "boolean",
+                    "default": true
+                },
+                "trim": {
+                    "description": "是否自动执行首尾trim（大小写不敏感）\n'h'或'H' : 表示仅trim半角空格\n其它非空字串（如'w'）表示全半角空格均需trim\n不定义或定义为空字串，表示不进行trim\n在存在合法检查之后、类型合法检查之前进行",
+                    "type": "string",
+                    "enum": [
+                        "h",
+                        "w"
+                    ]
+                },
+                "reg": {
+                    "description": "正则合法检查，定义此参数必须符合的正则表达式\n对type指标定义为'file'的参数，此项检查作用于文件名上",
+                    "type": "string"
+                },
+                "len": {
+                    "oneOf": [{
+                            "description": "长度合法检查（长度范围定义）\n限制参数值作为字串的长度范围\n对于type为'file'的参数，此项实际上定义的是文件字节大小范围\nlen[0]～len[1]的范围，闭区间",
+                            "type": "array",
+                            "maxItems": 2,
+                            "minItems": 2
+                        },
+                        {
+                            "description": "长度合法检查（长度范围定义）\n限制参数值作为字串的长度范围\n对于type为'file'的参数，此项实际上定义的是文件字节大小范围\n可用null表示无穷大，如'[1,null]'等同于范围[1,∞]",
+                            "type": "string",
+                            "pattern": "/^[\\[\\(]\\d+,\\d+[\\]\\)]$/"
+                        }
+                    ]
+                },
+                "type": {
+                    "description": "类型合法检查，类型转换（大小写不敏感）\n不定义或其他定义即默认为字串类型",
+                    "type": "string",
+                    "enum": [
+                        "int",
+                        "float",
+                        "file",
+                        "string"
+                    ]
+                },
+                "case": {
+                    "description": "是否自动转换大写或者小写",
+                    "type": "string",
+                    "enum": [
+                        "upper",
+                        "lower"
+                    ]
+                },
+                "range": {
+                    "oneOf": [{
+                            "description": "取值范围合法检查（取值范围定义）\n如:[0,23] , ('A','Z'] , (3.2,7.1)",
+                            "type": "string"
+                        },
+                        {
+                            "description": "取值范围合法检查（取值范围定义）\n如:[0,23] , ['A','Z'] , [3.2,7.1]",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "enum": {
+                    "description": "使用枚举方式定义可能的合法值\n数组成员应该和type定义的数据类型相同",
+                    "type": "array"
+                }
+            }
+        },
+        "check": {
+            "oneOf": [{
+                    "type": "string"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "R": {
+                            "description": "表达式，成立时通过",
+                            "type": "string"
+                        },
+                        "M": {
+                            "description": "不成立后端预处理将此项作为返回的msg",
+                            "type": "string"
+                        },
+                        "no": {
+                            "description": "不成立后端预处理将此项作为返回的no（未定义则默认为400，注意禁止此处定义为200）",
+                            "type": "integer",
+                            "minimum": 201
+                        }
+                    }
+                }
+            ]
+        },
+        "ret": {
+            "oneOf": [{
+                    "properties": {
+                        "no": {
+                            "description": "返回码,200为正确",
+                            "type": "integer",
+                            "default": 200
+                        },
+                        "msg": {
+                            "description": "错误信息",
+                            "type": "string"
+                        }
+                    },
+                    "default": {
+                        "no":200
+                    }
+                },
+                {
+                    "properties": {
+                        "status": {
+                            "description": "HTTP返回码",
+                            "type": "integer",
+                            "default": 200
+                        },
+                        "content-type": {
+                            "description": "错误信息",
+                            "type": "string",
+                            "enum": [
+                                "text/plain;charset=utf-8",
+                                "image/png"
+                            ]
+                        },
+                        "responseText": {
+                            "description": "返回文本",
+                            "type": "string"
+                        },
+                        "response": {
+                            "description": "base64编码",
+                            "type": "string"
+                        }
+                    },
+                    "default": {
+                        "status":200
+                    }
+                }
+            ]
+        },
+        "grant": {
+            "oneOf": [{
+                    "type": "string",
+                    "default": "{U}"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "default": "{U}"
+                    },
+                    "default": []
+                }
+            ]
+        }
+    },
+    "properties": {
+        "name": {
+            "description": "接口名",
+            "type": "string"
+        },
+        "rem": {
+            "description": "接口描述",
+            "type": "string"
+        },
+        "url": {
+            "description": "接口url\n大小写敏感",
+            "type": "string"
+        },
+        "method": {
+            "description": "接口调用方式(必须定义)，大小写不敏感",
+            "type": "string",
+            "default": "post"
+        },
+        "params": {
+            "description": "入口参数定义",
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/param"
+            }
+        },
+        "pretreat": {
+            "description": "预处理js伪码定义\n在合法检查和类型转换之后执行",
+            "$ref": "#/definitions/grant"
+        },
+        "grant": {
+            "description": "定义权限检查规则\n{}:入口参数,{U}:登录用户,{S}:当前会话",
+            "$ref": "#/definitions/grant"
+        },
+        "check": {
+            "description": "参数检查规则",
+            "oneOf": [{
+                    "$ref": "#/definitions/check"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/check"
+                    }
+                }
+            ]
+        },
+        "error": {
+            "description": "定义接口可能的错误返回",
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "ret": {
+            "description": "通过给出返回demo的方式给出返回内容格式定义",
+            "type": "object",
+            "oneOf": [{
+                    "$ref": "#/definitions/ret",
+                    "default": {}
+                },
+                {
+                    "additionalProperties": {
+                        "type": "object",
+                        "$ref": "#/definitions/ret"
+                    },
+                    "default": {
+                        "成功": {
+                            "no": 200
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
