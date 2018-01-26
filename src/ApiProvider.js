@@ -32,7 +32,9 @@ function getAliasDir(document, alias) {
     let path = vscode.workspace.getWorkspaceFolder(document.uri).uri.path
     let map = {}
     try {
-        map = JSON.parse(fs.readFileSync(path + "/" + "config.json")).alias
+        if (fs.existsSync(path + "/" + "config.json")) {
+            map = JSON.parse(fs.readFileSync(path + "/" + "config.json")).alias
+        }
     } catch (error) {
         console.log(error)
     }
@@ -52,8 +54,8 @@ function getApiDir(document) {
             return ss
     }
     ss = document.fileName.split("/")
-    if (ss[ss.length-3]==="test") {
-        ss = getAliasDir(document, ss[ss.length-2])
+    if (ss[ss.length - 3] === "test") {
+        ss = getAliasDir(document, ss[ss.length - 2])
         if (fs.existsSync(ss))
             return ss
     }

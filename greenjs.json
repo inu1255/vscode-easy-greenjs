@@ -118,6 +118,8 @@
                             "type": "string"
                         }
                     },
+                    "required": ["no"],
+                    "additionalProperties": {},
                     "default": {
                         "no": 200
                     }
@@ -146,6 +148,7 @@
                             "type": "string"
                         }
                     },
+                    "required": ["status"],
                     "default": {
                         "status": 200
                     }
@@ -164,6 +167,12 @@
                         "default": "{U}"
                     },
                     "default": []
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             ]
         }
