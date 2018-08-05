@@ -2,7 +2,7 @@
     "name": "easy-greenjs",
     "displayName": "easy-greenjs",
     "description": "an extension for greenjs",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "inu1255",
     "engines": {
         "vscode": "^1.18.0"

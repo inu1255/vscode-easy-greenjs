@@ -53,7 +53,8 @@
                         "int",
                         "float",
                         "file",
-                        "string"
+						"string",
+						"json"
                     ]
                 },
                 "case": {
