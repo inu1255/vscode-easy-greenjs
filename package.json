@@ -1,58 +1,74 @@
 {
-    "name": "easy-greenjs",
-    "displayName": "easy-greenjs",
-    "description": "an extension for greenjs",
-    "version": "0.0.4",
-    "publisher": "inu1255",
-    "engines": {
-        "vscode": "^1.18.0"
-    },
-    "categories": [
-        "Other"
+  "name": "easy-greenjs",
+  "displayName": "easy-greenjs",
+  "description": "an extension for greenjs",
+  "version": "0.0.4",
+  "publisher": "inu1255",
+  "engines": {
+    "vscode": "^1.18.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript"
+  ],
+  "main": "./extension",
+  "contributes": {
+    "configuration": [
+      {
+        "type": "object",
+        "title": "easy greenjs",
+        "properties": {
+          "greenjs.test.postFunc": {
+            "type": "string",
+            "description": "post接口测试函数",
+            "default": "request.postForm"
+          },
+          "greenjs.test.getFunc": {
+            "type": "string",
+            "description": "get接口测试函数",
+            "default": "request.get"
+          },
+          "greenjs.test.completionTrigger": {
+            "type": "string",
+            "description": "测试接口自动补全触发字符串,如:r,则输入r会提示接口补全",
+            "default": ""
+          }
+        }
+      }
     ],
-    "activationEvents": [
-        "onLanguage:javascript"
-    ],
-    "main": "./extension",
-    "contributes": {
-        "configuration":[
-            {
-                "type": "object",
-                "title": "easy greenjs",
-                "properties": {
-                    "greenjs.test.postFunc":{
-                        "type":"string",
-                        "description": "post接口测试函数",
-                        "default": "request.postForm"
-                    },
-                    "greenjs.test.getFunc":{
-                        "type":"string",
-                        "description": "get接口测试函数",
-                        "default": "request.get"
-                    },
-                    "greenjs.test.completionTrigger":{
-                        "type":"string",
-                        "description": "测试接口自动补全触发字符串,如:r,则输入r会提示接口补全",
-                        "default": ""
-                    }
-                }
-            }
-        ],
-        "jsonValidation": [{
-            "fileMatch": "*.json",
-            "url": "./greenjs.json"
-        }]
-    },
-    "scripts": {
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "node ./node_modules/vscode/bin/test"
-    },
-    "devDependencies": {
-        "typescript": "^2.5.2",
-        "vscode": "^1.1.5",
-        "mocha": "^3.5.0",
-        "eslint": "^4.6.1",
-        "@types/node": "^7.0.0",
-        "@types/mocha": "^2.2.42"
-    }
+    "jsonValidation": [
+      {
+        "fileMatch": "*.json",
+        "url": "./greenjs.json"
+      }
+    ]
+  },
+  "scripts": {
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "typescript": "^2.5.2",
+    "vscode": "^1.1.5",
+    "mocha": "^3.5.0",
+    "eslint": "^4.6.1",
+    "@types/node": "^7.0.0",
+    "@types/mocha": "^2.2.42"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inu1255/vscode-easy-greenjs.git"
+  },
+  "author": "inu1255",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/inu1255/vscode-easy-greenjs/issues"
+  },
+  "homepage": "https://github.com/inu1255/vscode-easy-greenjs#readme"
 }
