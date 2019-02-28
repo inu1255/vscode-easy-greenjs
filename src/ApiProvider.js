@@ -126,7 +126,7 @@ class ApiProvider {
             let s = m[0].slice(2, m[0].length - 1)
             if (api.map[s]) {
                 let range = new vscode.Range(document.positionAt(m.index + 1), document.positionAt(m.index + 2 + s.length))
-                let link = new vscode.DocumentLink(range, new vscode.Uri.file(dir + s + ".json"))
+                let link = new vscode.DocumentLink(range, vscode.Uri.file(dir + s + ".json"))
                 links.push(link)
             }
         }
