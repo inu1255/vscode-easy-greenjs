@@ -114,7 +114,7 @@ class ApiProvider {
     getLinks(document, api, dir) {
         // var document = vscode.window.activeTextEditor.document
         let text = document.getText()
-        var re = /(["'])[\w\/]+\1/g
+        var re = /(["'])[^"'\s]+\1/g
         var links = [],
             m;
         while (m = re.exec(text)) {
