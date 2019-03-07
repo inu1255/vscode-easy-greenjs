@@ -2,7 +2,7 @@
   "name": "easy-greenjs",
   "displayName": "easy-greenjs",
   "description": "an extension for greenjs",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "inu1255",
   "engines": {
     "vscode": "^1.18.0"
@@ -51,11 +51,11 @@
     ],
     "jsonValidation": [
       {
-        "fileMatch": "*/@API/*.json",
+        "fileMatch": "**/*API/*.json",
         "url": "./greenjs.json"
       },
       {
-        "fileMatch": "*/api/*.json",
+        "fileMatch": "**/api/*.json",
         "url": "./greenjs.json"
       }
     ]
