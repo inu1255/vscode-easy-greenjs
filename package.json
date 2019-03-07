@@ -2,7 +2,7 @@
   "name": "easy-greenjs",
   "displayName": "easy-greenjs",
   "description": "an extension for greenjs",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "publisher": "inu1255",
   "engines": {
     "vscode": "^1.18.0"
@@ -20,19 +20,30 @@
         "type": "object",
         "title": "easy greenjs",
         "properties": {
-          "greenjs.test.postFunc": {
+          "greenjs.postFunc": {
             "type": "string",
             "description": "post接口测试函数",
-            "default": "request.postForm"
+            "default": "APP.Srv(\"{U}\",{NB},null,30000,function(ret) {\n\tif(200!=ret.no)\n\t\treturn alert(ret.msg);\n\t$1\n});"
           },
-          "greenjs.test.getFunc": {
+          "greenjs.getFunc": {
             "type": "string",
             "description": "get接口测试函数",
-            "default": "request.get"
+            "default": "APP.Srv(\"{U}\",{NB},null,30000,function(ret) {\n\tif(200!=ret.no)\n\t\treturn alert(ret.msg);\n\t$1\n},true);"
           },
-          "greenjs.test.completionTrigger": {
+          "greenjs.completionTrigger": {
             "type": "string",
             "description": "测试接口自动补全触发字符串,如:r,则输入r会提示接口补全",
+            "default": ""
+          },
+          "greenjs.apiDir": {
+            "type": "string",
+            "description": "接口定义文件夹名",
+            "default": "@API",
+            "minLength": 1
+          },
+          "greenjs.apiPath": {
+            "type": "string",
+            "description": "接口定义路径",
             "default": ""
           }
         }
@@ -40,7 +51,11 @@
     ],
     "jsonValidation": [
       {
-        "fileMatch": "*.json",
+        "fileMatch": "*/@API/*.json",
+        "url": "./greenjs.json"
+      },
+      {
+        "fileMatch": "*/api/*.json",
         "url": "./greenjs.json"
       }
     ]

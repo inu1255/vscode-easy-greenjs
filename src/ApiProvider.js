@@ -1,5 +1,6 @@
 var vscode = require("vscode")
 const fs = require("fs");
+const path = require("path");
 
 function getFiles(dir, p) {
     p = p || {
@@ -11,7 +12,8 @@ function getFiles(dir, p) {
             if (err) reject(err)
             let ps = []
             for (let filename of filenames) {
-                let stat = fs.statSync(dir + filename)
+                let file = path.join(dir, filename)
+                let stat = fs.statSync(file)
                 if (stat.isFile()) {
                     if (filename.endsWith(".json"))
                         p.files.push(p.name + filename)
@@ -20,7 +22,7 @@ function getFiles(dir, p) {
                         name: p.name + filename + "/",
                         files: p.files
                     }
-                    ps.push(getFiles(dir + filename + "/", c))
+                    ps.push(getFiles(file, c))
                 }
             }
             Promise.all(ps).then(() => resolve(p.files))
@@ -28,82 +30,75 @@ function getFiles(dir, p) {
     })
 }
 
-function getAliasDir(document, alias) {
-    let path = vscode.workspace.getWorkspaceFolder(document.uri).uri.path
-    let map = {}
-    try {
-        if (fs.existsSync(path + "/" + "config.json")) {
-            map = JSON.parse(fs.readFileSync(path + "/" + "config.json")).alias
-        }
-    } catch (error) {
-        console.log(error)
-    }
-    return map[alias]
-}
-
-function getApiDir(document) {
-    let doc = vscode.window.activeTextEditor.document
-    let lineone = document.getText(document.lineAt(0).range)
-    let ss = lineone.split("test:")
-    if (ss.length === 2) {
-        ss = ss[1].trim()
-        if (fs.existsSync(ss))
-            return ss
-        ss = getAliasDir(document, ss)
-        if (fs.existsSync(ss))
-            return ss
-    }
-    ss = document.fileName.split("/")
-    if (ss[ss.length - 3] === "test") {
-        ss = getAliasDir(document, ss[ss.length - 2])
-        if (fs.existsSync(ss))
-            return ss
-    }
+function getApiDir(document, apiDir) {
+    let ss = document.fileName.split(path.sep)
+    let i = ss.indexOf('public')
+    let dir = ''
+    if (i < 0) i = ss.indexOf('routes')
+    if (i < 0) return ''
+    dir = ss.slice(0, i).concat(apiDir).join(path.sep)
+    if (fs.existsSync(dir))
+        return dir
+    return ''
 }
 
 class ApiProvider {
-    constructor(cache, config) {
-        this.config = {
-            postFunc: 'request.postForm',
-            getFunc: 'request.get',
-            completionTrigger: '',
-        }
-        Object.assign(this.config, config)
+    constructor(cache) {
+        this.config = vscode.workspace.getConfiguration()
         this.cache = cache
     }
-    updateConfig() {
-        let config = vscode.workspace.getConfiguration()
-        this.config.postFunc = config.get('greenjs.test.postFunc')
-        this.config.getFunc = config.get('greenjs.test.getFunc')
-        this.config.completionTrigger = config.get('greenjs.test.completionTrigger')
+    get postFunc() {
+        return this.config.get('greenjs.postFunc')
+    }
+    get getFunc() {
+        return this.config.get('greenjs.getFunc')
+    }
+    get completionTrigger() {
+        return this.config.get('greenjs.completionTrigger')
+    }
+    get apiDir() {
+        return this.config.get('greenjs.apiDir')
+    }
+    get apiPath() {
+        return this.config.get('greenjs.apiPath')
     }
     getHover(document, position, api) {
         let linenum = position.line;
         let line = document.lineAt(linenum)
         let b = position.character
         let e = position.character
+        let c
         for (; b >= 0; b--) {
-            if (line.text.charAt(b) == '"')
+            c = line.text.charAt(b)
+            if (c == '"' || c == "'")
                 break
         }
         if (b < 0)
             return null
         for (; e < line.range.end.character; e++) {
-            if (line.text.charAt(e) == '"')
+            if (line.text.charAt(e) == c)
                 break
         }
         if (e >= line.range.end.character)
             return null
-        let text = line.text.slice(b + 2, e)
-        let item = api.map[text]
-        if (!item) {
-            return null
-        }
+        let key = this.resolve(line.text.slice(b + 1, e))
+        let item = api.map[key]
+        if (!item) return null
+        this.resolveCompletionItem(item)
         return new vscode.Hover([item.detail, item.documentation])
+    }
+    resolve(text) {
+        let ss = text.split("/")
+        while (ss.length) {
+            if (ss[0] == "." || ss[0] == "") ss.shift()
+            else if (ss[0] == "..") ss = ss.slice(2)
+            else break
+        }
+        return ss.join("/").replace(/\.json$/, '')
     }
     // 悬浮提示
     provideHover(document, position, token) {
-        let dir = getApiDir(document)
+        let dir = this.apiPath || getApiDir(document, this.apiDir)
         if (!dir) return []
         let api = this.cache[dir]
         if (!api) {
@@ -119,14 +114,14 @@ class ApiProvider {
     getLinks(document, api, dir) {
         // var document = vscode.window.activeTextEditor.document
         let text = document.getText()
-        var re = /"[\w\/]+"/g
+        var re = /(["'])[\w\/]+\1/g
         var links = [],
             m;
         while (m = re.exec(text)) {
-            let s = m[0].slice(2, m[0].length - 1)
-            if (api.map[s]) {
-                let range = new vscode.Range(document.positionAt(m.index + 1), document.positionAt(m.index + 2 + s.length))
-                let link = new vscode.DocumentLink(range, vscode.Uri.file(dir + s + ".json"))
+            let key = this.resolve(m[0].slice(1, -1))
+            if (api.map[key]) {
+                let range = new vscode.Range(document.positionAt(m.index + 1), document.positionAt(m.index + m[0].length))
+                let link = new vscode.DocumentLink(range, vscode.Uri.file(path.join(dir, key + ".json")))
                 links.push(link)
             }
         }
@@ -134,7 +129,7 @@ class ApiProvider {
     }
     // 链接跳转
     provideDocumentLinks(document, token) {
-        let dir = getApiDir(document)
+        let dir = this.apiPath || getApiDir(document, this.apiDir)
         if (!dir) return []
         let api = this.cache[dir]
         if (!api) {
@@ -152,7 +147,7 @@ class ApiProvider {
     }
     // 补全
     provideCompletionItems(document, position, token, context) {
-        let dir = getApiDir(document)
+        let dir = this.apiPath || getApiDir(document, this.apiDir)
         if (!dir) return []
         let api = this.cache[dir] || {
             update_at: 0,
@@ -165,26 +160,24 @@ class ApiProvider {
         }
         if (api.update_at) // 运行过之后等待下次运行
             api.update_at = start_at
-        let that = this;
-        return new Promise(function(resolve, reject) {
-            that.updateConfig()
-            getFiles(dir).then(function(files) {
+        return new Promise((resolve, reject) => {
+            getFiles(dir).then((files) => {
                 let map = api.map
-                let items = files.map(name => {
+                let items = files.filter(x => x.endsWith('.json')).map(name => {
                     name = name.slice(0, name.length - 5)
                     var completionItem = map[name]
                     if (!completionItem) {
                         completionItem = new vscode.CompletionItem(name);
                         completionItem.kind = vscode.CompletionItemKind.Snippet;
                         completionItem.detail = `/${name}`;
-                        completionItem.filterText = that.config.completionTrigger + name;
+                        completionItem.filterText = this.completionTrigger + name;
                         map[name] = completionItem
                     }
-                    completionItem.filename = dir + name + ".json"
+                    completionItem.filename = path.join(dir, name + ".json")
                     return completionItem
                 })
                 let update_at = new Date().getTime()
-                that.cache[dir] = {
+                this.cache[dir] = {
                     update_at,
                     runtime: update_at - start_at + 500,
                     items,
@@ -192,27 +185,26 @@ class ApiProvider {
                 }
                 console.log(update_at - start_at + 500)
                 setTimeout(function() {
-                    items.forEach(x => that.resolveCompletionItem(x))
+                    items.forEach(x => this.resolveCompletionItem(x))
                 })
                 resolve(items)
             }, reject)
         })
     }
-    resolveCompletionItem(item, token) {
+    resolveCompletionItem(item) {
         if (!item.filename) return item
+        let stat = fs.statSync(item.filename)
+        let t = stat.mtime.getTime()
+        if (t <= item.update_at) return item
+        item.update_at = t
         let content = fs.readFileSync(item.filename)
-        let d = new Function("return " + content)()
-        let ss = [],
-            s
-        let postFunc = this.config.postFunc
-        let getFunc = this.config.getFunc
-        if (Object.keys(d.params || {}).length) {
-            if (d.method == "GET") {
-                ss.push(`${getFunc}("/${item.label}",{ // ${d.name}`)
-            } else {
-                ss.push(`${postFunc}("/${item.label}",{ // ${d.name}`)
-            }
-            var i = 1;
+        let d
+        try { d = new Function("return " + content)() } catch (error) {
+            return item
+        }
+        let i = 1;
+        let body = ''
+        if (d.params) {
             for (let k in d.params) {
                 let v = d.params[k]
                 let s
@@ -230,31 +222,32 @@ class ApiProvider {
                 if (v.lbl || v.rem) {
                     s += " //" + (v.lbl || v.rem)
                 }
-                ss.push(s)
+                body += s + "\n"
                 i++;
             }
-            ss.push("})")
-            s = ss.join("\n")
-        } else {
-            if (d.method == "GET") {
-                s = `${getFunc}("/${item.label}") // ${d.name}`
-            } else {
-                s = `${postFunc}("/${item.label}") // ${d.name}`
-            }
         }
-        item.detail = `[${d.method}] - ${d.name}`
+        body += "}"
+        let method = d.method || 'any'
+        let s = method.toLowerCase() == "get" ? this.getFunc : this.postFunc
+        s = s.replace(/\$(\{?)(\d+)/g, function(x0, f, n) {
+            return `$${f}${+n+i-1}`
+        })
+        s = s.replace(/\{B\}/, '{\n' + body)
+        s = s.replace(/\{NB\}/, `{ // ${d.name}\n` + body)
+        s = s.replace(/\{U\}/g, item.label)
+        s = s.replace(/\{N\}/g, d.name)
+        item.detail = `[${method}] - ${d.name}`
         let docs = [
             "``` javascript",
             s,
             "```",
             "##### 返回值",
             "``` json",
-            JSON.stringify(d.ret, null, 4),
+            JSON.stringify(d.ret, null, 2),
             "```"
         ]
         item.documentation = new vscode.MarkdownString(docs.join("\n"))
         item.insertText = new vscode.SnippetString(s)
-        delete item.filename
         return item;
     }
     dispose() {}
