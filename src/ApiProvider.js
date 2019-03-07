@@ -44,8 +44,10 @@ function getApiDir(document, apiDir) {
 
 class ApiProvider {
     constructor(cache) {
-        this.config = vscode.workspace.getConfiguration()
         this.cache = cache
+    }
+    get config() {
+        return vscode.workspace.getConfiguration()
     }
     get postFunc() {
         return this.config.get('greenjs.postFunc')
@@ -170,10 +172,10 @@ class ApiProvider {
                         completionItem = new vscode.CompletionItem(name);
                         completionItem.kind = vscode.CompletionItemKind.Snippet;
                         completionItem.detail = `/${name}`;
-                        completionItem.filterText = this.completionTrigger + name;
                         map[name] = completionItem
+                        completionItem.filename = path.join(dir, name + ".json")
                     }
-                    completionItem.filename = path.join(dir, name + ".json")
+                    completionItem.filterText = this.completionTrigger + name;
                     return completionItem
                 })
                 let update_at = new Date().getTime()
